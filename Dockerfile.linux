@@ -1,0 +1,46 @@
+FROM dorowu/ubuntu-desktop-lxde-vnc
+
+RUN rm -f /etc/apt/sources.list.d/google-chrome.list || true
+
+RUN apt update && apt install -y \
+  qt5-default \
+  qtbase5-dev \
+  qtchooser \
+  qt5-qmake \
+  qtbase5-dev-tools \
+  libqt5gui5 \
+  libqt5widgets5 \
+  libqt5core5a \
+  libxcb-xinerama0 \
+  libxcb-xkb1 \
+  libxkbcommon-x11-0 \
+  libxcb1 \
+  libx11-xcb1 \
+  libglu1-mesa \
+  libxcb-render0 \
+  libxcb-shape0 \
+  libxcb-xfixes0 \
+  libxcb-randr0 \
+  libxcb-image0 \
+  libxcb-keysyms1 \
+  libxcb-icccm4 \
+  libxcb-util1 \
+  libxcb-xinput0 \
+  libxrender1 \
+  libxi6 \
+  libxkbcommon0 \
+  libxkbcommon-x11-0 \
+  firefox unzip zip
+
+RUN apt-get update && apt-get install -y wget gnupg && \
+  wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux.gpg && \
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+  > /etc/apt/sources.list.d/google-chrome.list
+
+COPY init.sh /init.sh
+RUN chmod +x /init.sh
+
+COPY ida.zip /tmp/ida.zip
+RUN unzip -o /tmp/ida.zip -d /opt/ && rm /tmp/ida.zip
+
+ENTRYPOINT ["/init.sh"]

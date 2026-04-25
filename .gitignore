@@ -1,2 +1,7 @@
 .DS_Store
 ida.zip
+windows-arm.qcow2
+*.iso
+*.vhdx
+windows11.qcow2
+vars.fd

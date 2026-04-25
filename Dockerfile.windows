@@ -1,0 +1,41 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    qemu-system-arm \
+    qemu-utils \
+    qemu-efi-aarch64 \
+    netcat \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /vm
+
+# copy VHDX (or mount at runtime instead)
+COPY vm/Windows11_Arm64.vhdx /vm/Windows11_Arm64.vhdx
+
+# prepare disk + firmware
+RUN qemu-img convert -O qcow2 /vm/Windows11_Arm64.vhdx /vm/windows-arm.qcow2 && \
+    cp /usr/share/qemu-efi-aarch64/QEMU_EFI.fd /vm/edk2-aarch64-code.fd && \
+    cp /usr/share/qemu-efi-aarch64/QEMU_VARS.fd /vm/vars.fd
+
+EXPOSE 5901 4444
+
+CMD qemu-system-aarch64 \
+    -accel kvm \
+    -cpu host \
+    -machine virt,highmem=on \
+    -m 4096 \
+    -smp 2 \
+    -drive if=pflash,format=raw,readonly=on,file=/vm/edk2-aarch64-code.fd \
+    -drive if=pflash,format=raw,file=/vm/vars.fd \
+    -device qemu-xhci \
+    -drive if=none,id=hd0,file=/vm/windows-arm.qcow2,format=qcow2 \
+    -device nvme,drive=hd0,serial=nvme0 \
+    -device ramfb \
+    -device usb-kbd \
+    -device usb-tablet \
+    -device e1000,netdev=net0 \
+    -netdev user,id=net0 \
+    -vnc :1,password=on \
+    -monitor tcp:0.0.0.0:4444,server,nowait
